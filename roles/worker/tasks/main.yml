@@ -1,0 +1,74 @@
+---
+- name: Install usefull package
+  become: yes
+  apt:
+    name:
+      - maven
+      - default-jdk
+    state: present
+
+- name: Create application folder
+  become: yes
+  file:
+    path: /opt/worker_app/
+    state: directory
+
+- name: upload worker app
+  become: yes
+  copy:
+    src: worker.tar
+    dest: /tmp/worker.tar
+    mode: 0644
+
+- name: Extract worker application
+  become: yes
+  unarchive:
+    src: /tmp/worker.tar
+    dest: /opt/worker_app
+    remote_src: yes
+
+- name: Upload service script
+  become: yes
+  copy:
+    src: roles/worker/files/worker.service
+    dest: /etc/systemd/system/worker.service
+
+- name: Create env file
+  become: yes
+  file:
+    path: /etc/default/worker.env
+    state: touch
+    mode: 0644
+
+- name: Load envs to worker service env
+  become: yes
+  blockinfile:
+    path: /etc/default/worker.env
+    block: |
+      REDIS_HOST="{{ redis_host }}"
+      POSTGRESQL_HOST="{{ postgresql_host }}"
+      POSTGRESQL_PORT={{ postgresql_port }}
+      POSTGRESQL_DB="{{ postgresql_db }}"
+      POSTGRESQL_USER="{{ postgresql_user }}"
+      POSTGRESQL_PASSWORD={{ postgresql_password }}
+
+- name: Install maven dependencies
+  become: yes
+  command: mvn dependency:resolve
+  args:
+    chdir: /opt/worker_app/
+
+- name: Build the maven package
+  become: yes
+  command: mvn package
+  args:
+    chdir: /opt/worker_app/
+
+- name: Enable and start system service
+  become: yes
+  ansible.builtin.systemd:
+    daemon_reload: yes
+    name: worker.service
+    state: started
+    enabled: yes
+

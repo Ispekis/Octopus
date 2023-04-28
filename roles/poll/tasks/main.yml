@@ -1,0 +1,64 @@
+---
+- name: Install usefull package
+  become: yes
+  apt:
+    name:
+      - nginx
+      - python3
+      - python3-pip
+    state: present
+
+- name: Ensure that nginx service start
+  become: yes
+  service:
+    name: nginx
+    enabled: yes
+
+- name: Upload service script
+  become: yes
+  copy:
+    src: roles/poll/files/poll.service
+    dest: /etc/systemd/system/poll.service
+
+- name: upload poll app
+  become: yes
+  copy:
+    src: poll.tar
+    dest: /tmp/poll.tar
+    mode: 0644
+
+- name: Extract poll application
+  become: yes
+  unarchive:
+    src: /tmp/poll.tar
+    dest: /var/www/html
+    remote_src: yes
+
+- name: Install pip requirements
+  become: yes
+  ansible.builtin.pip:
+    requirements: /var/www/html/requirements.txt
+
+- name: Create env file
+  become: yes
+  file:
+    path: /etc/default/poll.env
+    state: touch
+    mode: 0644
+
+- name: Load envs to poll service env
+  become: yes
+  blockinfile:
+    path: /etc/default/poll.env
+    block: |
+      REDIS_HOST="{{ redis_host }}"
+      POLL_HOST="{{ poll_host }}"
+      POLL_PORT="{{ poll_server_port }}"
+
+- name: Enable and start system service
+  become: yes
+  ansible.builtin.systemd:
+    daemon_reload: yes
+    name: poll.service
+    state: started
+    enabled: yes

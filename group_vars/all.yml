@@ -1,0 +1,22 @@
+---
+poll_host: "{{ hostvars['poll'].ansible_host }}"
+poll_server_port: 5000
+
+worker_host: "{{ hostvars['worker'].ansible_host }}"
+
+result_host: "{{ hostvars['result'].ansible_host }}"
+result_server_port: 5011
+
+redis_host: "{{ hostvars['redis'].ansible_host }}"
+
+postgresql_host: "{{ hostvars['postgresql'].ansible_host }}"
+postgresql_port: 5432
+postgresql_db: paul
+postgresql_user: paul
+postgresql_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          64633865326436366462653164636163636133326663646432333630653730616233393565313033
+          3865646266336165663937396562376537336262643136390a313236366333373363316533643563
+          39353930633862366131393039333062373362613764623636643465656638363666663164636135
+          3734393862333330300a613632363764353735646233343561313064396232346363313761636662
+          66663038323939336162346439653033666563346231393563656264303563373563

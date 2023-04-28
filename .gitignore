@@ -1,0 +1,7 @@
+B-DOP-400_octopus_applications.zip
+B-DOP-400_octopus_applications
+tmp
+.vagrant
+octo
+*.pub
+ping_each.sh

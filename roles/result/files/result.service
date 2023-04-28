@@ -1,0 +1,12 @@
+[Unit]
+Description=Result server Service
+
+[Service]
+User=root
+WorkingDirectory=/var/www/html/
+EnvironmentFile=/etc/default/result.env
+ExecStart= /bin/node server.js
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

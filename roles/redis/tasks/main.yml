@@ -1,0 +1,37 @@
+---
+- name: Install redis packages
+  become: yes
+  apt:
+    name:
+      - redis-server
+    state: present
+
+- name: Create folder for redis in etc
+  become: yes
+  file:
+    path: /etc/redis
+    state: directory
+
+- name: Create folder for lib redis in var
+  become: yes
+  file:
+    path: /var/lib/redis
+    state: directory
+
+- name: Create folder for log redis in var
+  become: yes
+  file:
+    path: /var/log/redis
+    state: directory
+
+- name: Upload redis config file
+  become: yes
+  template:
+    src: roles/redis/files/redis.conf
+    dest: /etc/redis/redis.conf
+
+- name: Restart redis
+  become: yes
+  systemd:
+    name: redis-server.service
+    state: restarted

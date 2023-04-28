@@ -1,0 +1,92 @@
+---
+- name: Install usefull package
+  become: yes
+  apt:
+    name: gpg
+    state: present
+
+- name: Add PostgreSQL APT key
+  become: yes
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add PostgreSQL repository
+  become: yes
+  apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ buster-pgdg main
+    state: present
+
+- name: Install postgresql packages
+  become: yes
+  apt:
+    name:
+      - postgresql-12
+      - postgresql-client
+      - python3-psycopg2
+    state: present
+
+- name: Ensure that postgresql is running
+  become: yes
+  ansible.builtin.systemd:
+    daemon_reload: yes
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Deploy schema
+  become: yes
+  copy:
+    src: roles/postgresql/files/schema.sql
+    dest: /tmp/schema.sql
+
+- name: Deploy pg_hba config
+  become: yes
+  template:
+    src: roles/postgresql/files/pg_hba.conf
+    dest: /etc/postgresql/12/main/pg_hba.conf
+
+- name: Deploy pg_hba config
+  become: yes
+  template:
+    src: roles/postgresql/files/postgresql.conf
+    dest: /etc/postgresql/12/main/postgresql.conf
+
+
+
+- name: Restart psql
+  become: yes
+  systemd:
+    daemon_reload: yes
+    name: postgresql
+    state: restarted
+
+- name: Create Paul database
+  become: yes
+  become_user: postgres
+  postgresql_db:
+    name: paul
+    state: present
+
+- name: Load the schema file
+  become: yes
+  become_user: postgres
+  shell: "psql paul < /tmp/schema.sql"
+
+- name: Create Paul user
+  become: yes
+  become_user: postgres
+  postgresql_user:
+    db: paul
+    name: paul
+    password: "{{ postgresql_password }}"
+    state: present
+
+- name: Give priviliege
+  become: yes
+  become_user: postgres
+  postgresql_privs:
+    db: paul
+    role: paul
+    objs: ALL_IN_SCHEMA
+    privs: SELECT,INSERT,UPDATE,DELETE

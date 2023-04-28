@@ -1,0 +1,12 @@
+[Unit]
+Description=Worker Service
+
+[Service]
+User=root
+WorkingDirectory=/opt/worker_app/
+EnvironmentFile=/etc/default/worker.env
+
+ExecStart= /usr/bin/java -jar target/worker-jar-with-dependencies.jar
+
+[Install]
+WantedBy=multi-user.target

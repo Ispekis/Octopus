@@ -1,0 +1,26 @@
+---
+- name: Install usefull packages
+  become: yes
+  apt:
+    name:
+      # - apt-transport-https
+      # - ca-certificates
+      - git
+      # - curl
+      # - unzip
+    state: present
+
+- name: Update OS
+  become: yes
+  apt:
+    upgrade: yes
+
+- name: set timezone
+  become: yes
+  community.general.timezone:
+    name: Europe/Paris
+- name: set zsh as root shell
+  become: yes
+  user:
+    name: root
+    shell: /usr/bin/zsh

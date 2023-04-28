@@ -1,0 +1,70 @@
+---
+- name: Install usefull package
+  become: yes
+  apt:
+    name:
+      - nginx
+      - npm
+    state: present
+
+- name: Update cache
+  become: yes
+  apt:
+    update_cache: yes
+
+- name: Ensure that nginx service start
+  become: yes
+  service:
+    name: nginx
+    enabled: yes
+
+- name: upload result app
+  become: yes
+  copy:
+    src: result.tar
+    dest: /tmp/result.tar
+    mode: 0644
+
+- name: Upload service script
+  become: yes
+  copy:
+    src: roles/result/files/result.service
+    dest: /etc/systemd/system/result.service
+
+- name: Extract result application
+  become: yes
+  unarchive:
+    src: /tmp/result.tar
+    dest: /var/www/html
+    remote_src: yes
+
+- name: Install npm dependencies
+  become: yes
+  npm:
+    path: /var/www/html
+
+- name: Create env file
+  become: yes
+  file:
+    path: /etc/default/result.env
+    state: touch
+    mode: 0644
+
+- name: Load envs to result service env
+  become: yes
+  blockinfile:
+    path: /etc/default/result.env
+    block: |
+      PORT="{{ result_server_port }}"
+      POSTGRESQL_USER="{{ postgresql_user }}"
+      POSTGRESQL_PASSWORD="{{ postgresql_password }}"
+      POSTGRESQL_HOST="{{ postgresql_host }}"
+      POSTGRESQL_PORT="{{ postgresql_port }}"
+      POSTGRESQL_DB="{{ postgresql_db }}"
+
+- name: Enable and start system service
+  become: yes
+  ansible.builtin.systemd:
+    name: result.service
+    state: started
+    enabled: yes
